@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nombre Mystère - Paris fictifs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+            box-sizing: border-box;
+        }
+        .wrapper {
+            width: 90%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .disclaimer {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        .config {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        label {
+            font-size: 13px;
+            color: #555;
+        }
+        select, input {
+            padding: 8px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #cotePreview {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #b0c4de;
+            cursor: not-allowed;
+        }
+        #resetBtn, #logoutBtn {
+            background-color: #6c757d;
+        }
+        #resetBtn:hover, #logoutBtn:hover {
+            background-color: #545b62;
+        }
+        #indiceBtn {
+            background-color: #ffc107;
+            color: #333;
+        }
+        #indiceBtn:hover:not(:disabled) {
+            background-color: #e0a800;
+        }
+        #indiceTexte {
+            font-size: 12px;
+            color: #b8860b;
+            min-height: 14px;
+        }
+        #doubleOuRien {
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        #doublerBtn {
+            background-color: #dc3545;
+        }
+        #doublerBtn:hover {
+            background-color: #b02a37;
+        }
+        #encaisserBtn {
+            background-color: #28a745;
+        }
+        #encaisserBtn:hover {
+            background-color: #1e7e34;
+        }
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 15px;
+            min-height: 20px;
+        }
+        #essaisRestants {
+            font-size: 13px;
+            color: #555;
+        }
+        #solde {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a7a1a;
+        }
+        #stats {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+        #alerte {
+            font-size: 12px;
+            color: #b8860b;
+            min-height: 14px;
+            margin-bottom: 5px;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .topbar span {
+            font-weight: bold;
+        }
+        .topbar button {
+            width: auto;
+            margin-bottom: 0;
+        }
+        .historique {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #666;
+            text-align: left;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        #authError {
+            font-size: 13px;
+            color: #dc3545;
+            min-height: 16px;
+        }
+        .auth-toggle {
+            font-size: 13px;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            text-align: left;
+            padding: 4px 6px;
+            border-bottom: 1px solid #eee;
+        }
+        @keyframes pulseGain {
+            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+            50% { transform: scale(1.03); box-shadow: 0 4px 20px rgba(40,167,69,0.5); }
+            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        }
+        @keyframes pulsePerte {
+            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+            50% { transform: scale(0.98); box-shadow: 0 4px 20px rgba(220,53,69,0.5); }
+            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        }
+        .anim-gain {
+            animation: pulseGain 0.4s ease;
+        }
+        .anim-perte {
+            animation: pulsePerte 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper">
+
+        <div class="card" id="authCard">
+            <h2>🎲 Nombre Mystère</h2>
+            <p class="disclaimer">Jeu fictif à but ludique — monnaie virtuelle, sans valeur réelle.</p>
+
+            <div class="config">
+                <label for="authUsername">Nom d'utilisateur</label>
+                <input type="text" id="authUsername" autocomplete="username">
+                <label for="authPassword">Mot de passe</label>
+                <input type="password" id="authPassword" autocomplete="current-password">
+            </div>
+            <div id="authError"></div>
+            <button id="authSubmitBtn">Se connecter</button>
+            <div class="auth-toggle" id="authToggle">Pas de compte ? Créer un compte</div>
+        </div>
+
+        <div class="card" id="gameCard" hidden>
+            <div class="topbar">
+                <span id="usernameDisplay"></span>
+                <button id="logoutBtn">Déconnexion</button>
+            </div>
+
+            <div id="solde">💰 Solde : 0 points</div>
+            <div id="stats"></div>
+            <div id="alerte"></div>
+
+            <div class="config">
+                <label for="difficulte">Difficulté</label>
+                <select id="difficulte">
+                    <option value="facile">Facile (1-20)</option>
+                    <option value="moyen" selected>Moyen (1-50)</option>
+                    <option value="difficile">Difficile (1-100)</option>
+                </select>
+
+                <label for="mise">Mise (points)</label>
+                <input type="number" id="mise" min="1" value="10">
+            </div>
+            <div id="cotePreview"></div>
+
+            <button id="nouvellePartieBtn">🎰 Nouvelle partie</button>
+
+            <input type="number" id="userGuess" placeholder="Ton nombre..." disabled>
+            <button id="guessBtn" disabled>Valider</button>
+            <button id="indiceBtn" disabled hidden>💡 Indice</button>
+            <div id="indiceTexte"></div>
+
+            <div id="essaisRestants"></div>
+            <div id="message"></div>
+
+            <div id="doubleOuRien" hidden>
+                <p style="font-size:13px;margin:0 0 8px">Tenter de doubler ce gain ?</p>
+                <button id="doublerBtn">🎲 Doubler ou rien</button>
+                <button id="encaisserBtn">✅ Encaisser</button>
+            </div>
+
+            <button id="resetBtn">↺ Réinitialiser le solde</button>
+
+            <div class="historique" id="history">Aucune partie jouée pour l'instant.</div>
+        </div>
+
+        <div class="card" id="leaderboardCard" hidden>
+            <h2 style="font-size:16px">🏆 Classement</h2>
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Joueur</th><th>Record</th><th>Série</th></tr>
+                </thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
