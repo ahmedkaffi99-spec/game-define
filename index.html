@@ -33,11 +33,24 @@
             color: #999;
             margin-bottom: 10px;
         }
+        #joueur {
+            margin-bottom: 10px;
+        }
         #solde {
             font-size: 18px;
             font-weight: bold;
             color: #1a7a1a;
-            margin-bottom: 15px;
+        }
+        #stats {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+        #alerte {
+            font-size: 12px;
+            color: #b8860b;
+            min-height: 14px;
+            margin-bottom: 5px;
         }
         .config {
             display: flex;
@@ -87,6 +100,36 @@
         #resetBtn:hover {
             background-color: #545b62;
         }
+        #indiceBtn {
+            background-color: #ffc107;
+            color: #333;
+        }
+        #indiceBtn:hover:not(:disabled) {
+            background-color: #e0a800;
+        }
+        #indiceTexte {
+            font-size: 12px;
+            color: #b8860b;
+            min-height: 14px;
+        }
+        #doubleOuRien {
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        #doublerBtn {
+            background-color: #dc3545;
+        }
+        #doublerBtn:hover {
+            background-color: #b02a37;
+        }
+        #encaisserBtn {
+            background-color: #28a745;
+        }
+        #encaisserBtn:hover {
+            background-color: #1e7e34;
+        }
         #message {
             margin-top: 10px;
             font-weight: bold;
@@ -105,6 +148,22 @@
             max-height: 120px;
             overflow-y: auto;
         }
+        @keyframes pulseGain {
+            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+            50% { transform: scale(1.03); box-shadow: 0 4px 20px rgba(40,167,69,0.5); }
+            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        }
+        @keyframes pulsePerte {
+            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+            50% { transform: scale(0.98); box-shadow: 0 4px 20px rgba(220,53,69,0.5); }
+            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        }
+        .anim-gain {
+            animation: pulseGain 0.4s ease;
+        }
+        .anim-perte {
+            animation: pulsePerte 0.4s ease;
+        }
     </style>
 </head>
 <body>
@@ -113,14 +172,21 @@
         <h2>🎲 Nombre Mystère</h2>
         <p class="disclaimer">Jeu fictif à but ludique — monnaie virtuelle, sans valeur réelle.</p>
 
+        <select id="joueur">
+            <option value="j1">Joueur 1</option>
+            <option value="j2">Joueur 2</option>
+        </select>
+
         <div id="solde">💰 Solde : 0 points</div>
+        <div id="stats"></div>
+        <div id="alerte"></div>
 
         <div class="config">
             <label for="difficulte">Difficulté</label>
             <select id="difficulte">
-                <option value="facile">Facile (1-20) · cote x2</option>
-                <option value="moyen" selected>Moyen (1-50) · cote x4</option>
-                <option value="difficile">Difficile (1-100) · cote x8</option>
+                <option value="facile">Facile (1-20)</option>
+                <option value="moyen" selected>Moyen (1-50)</option>
+                <option value="difficile">Difficile (1-100)</option>
             </select>
 
             <label for="mise">Mise (points)</label>
@@ -132,9 +198,17 @@
 
         <input type="number" id="userGuess" placeholder="Ton nombre..." disabled>
         <button id="guessBtn" disabled>Valider</button>
+        <button id="indiceBtn" disabled hidden>💡 Indice</button>
+        <div id="indiceTexte"></div>
 
         <div id="essaisRestants"></div>
         <div id="message"></div>
+
+        <div id="doubleOuRien" hidden>
+            <p style="font-size:13px;margin:0 0 8px">Tenter de doubler ce gain ?</p>
+            <button id="doublerBtn">🎲 Doubler ou rien</button>
+            <button id="encaisserBtn">✅ Encaisser</button>
+        </div>
 
         <button id="resetBtn">↺ Réinitialiser le solde</button>
 
