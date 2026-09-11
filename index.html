@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu du Nombre Mystère</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+        }
+        input {
+            padding: 10px;
+            width: 60%;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .historique {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #666;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🎲 Nombre Mystère</h2>
+        <p>Devine un nombre entre 1 et 50 !</p>
+
+        <input type="number" id="userGuess" placeholder="Ton nombre...">
+        <br>
+        <button id="guessBtn">Valider</button>
+
+        <div id="message"></div>
+        <div class="historique" id="history"></div>
+    </div>
+
+    <script>
+        // 1. Générer un nombre aléatoire entre 1 et 50
+        const nombreMystere = Math.floor(Math.random() * 50) + 1;
+        let essais = [];
+
+        const input = document.getElementById('userGuess');
+        const btn = document.getElementById('guessBtn');
+        const message = document.getElementById('message');
+        const historyDiv = document.getElementById('history');
+
+        // 2. Écouter le clic sur le bouton
+        btn.addEventListener('click', function() {
+            let valeur = Number(input.value);
+
+            // Vérification si le champ est vide
+            if (!valeur) {
+                message.style.color = "orange";
+                message.textContent = "⚠️ Entre un nombre valide !";
+                return;
+            }
+
+            // On ajoute l'essai dans notre tableau
+            essais.push(valeur);
+            historyDiv.textContent = "Vos essais : " + essais.join(", ");
+
+            // 3. Logique de comparaison (nos fameux if/else !)
+            if (valeur === nombreMystere) {
+                message.style.color = "green";
+                message.textContent = `🎉 Bravo ! Tu as trouvé en ${essais.length} essais !`;
+                btn.disabled = true; // Désactive le bouton de fin de jeu
+                input.disabled = true;
+            } else if (valeur < nombreMystere) {
+                message.style.color = "blue";
+                message.textContent = "📉 C'est plus grand !";
+            } else {
+                message.style.color = "red";
+                message.textContent = "📈 C'est plus petit !";
+            }
+
+            // Vider le champ de saisie pour le prochain essai
+            input.value = "";
+            input.focus();
+        });
+    </script>
+
+</body>
+</html>
