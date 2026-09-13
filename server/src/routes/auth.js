@@ -23,7 +23,7 @@ function emettreCookie(res, userId) {
     res.cookie("token", token, {
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.COOKIE_SECURE === "true",
         maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 }
