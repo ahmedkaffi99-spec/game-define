@@ -1,0 +1,1 @@
+ALTER TABLE rounds ADD COLUMN IF NOT EXISTS server_seed VARCHAR(64);

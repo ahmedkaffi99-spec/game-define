@@ -14,14 +14,15 @@ window.addEventListener("unhandledrejection", (e) => {
 });
 
 const DIFFICULTES = {
-    facile: { label: "Facile (1-20)", max: 20, essaisMax: 6, coteMax: 3, coteMin: 1.5 },
-    moyen: { label: "Moyen (1-50)", max: 50, essaisMax: 7, coteMax: 5, coteMin: 2 },
-    difficile: { label: "Difficile (1-100)", max: 100, essaisMax: 8, coteMax: 10, coteMin: 3 },
+    facile: { label: "Facile (1-40)", max: 40, essaisMax: 4, coteMax: 3, coteMin: 1.75 },
+    moyen: { label: "Moyen (1-100)", max: 100, essaisMax: 5, coteMax: 4, coteMin: 2 },
+    difficile: { label: "Difficile (1-200)", max: 200, essaisMax: 5, coteMax: 8, coteMin: 4 },
 };
 const MISE_MAX_RATIO = 0.5;
 
-let activeRound = null; // { roundId, difficulte, mise, essaisMax, essaisRestants, indiceUtilise }
+let activeRound = null; // { roundId, difficulte, mise, essaisMax, essaisRestants, indiceUtilise, hashServeur }
 let soldeActuel = 0;
+let derniereVerif = null; // { hashServeur, serverSeed, nombreMystere, max } du dernier tirage terminé
 
 const authCard = document.getElementById("authCard");
 const gameCard = document.getElementById("gameCard");
@@ -53,6 +54,12 @@ const encaisserBtn = document.getElementById("encaisserBtn");
 const historyDiv = document.getElementById("history");
 const resetBtn = document.getElementById("resetBtn");
 const leaderboardBody = document.getElementById("leaderboardBody");
+const hashServeurEl = document.getElementById("hashServeur");
+const equiteVerifDiv = document.getElementById("equiteVerif");
+const verifierBtn = document.getElementById("verifierBtn");
+const equiteResultat = document.getElementById("equiteResultat");
+const rtpCard = document.getElementById("rtpCard");
+const rtpBody = document.getElementById("rtpBody");
 
 let modeInscription = false;
 
@@ -71,6 +78,30 @@ async function appel(url, options = {}) {
         throw new Error(data.erreur || "Une erreur est survenue.");
     }
     return data;
+}
+
+function octetsVersHex(buffer) {
+    return Array.from(new Uint8Array(buffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+async function sha256Hex(texte) {
+    const donnees = new TextEncoder().encode(texte);
+    const hash = await crypto.subtle.digest("SHA-256", donnees);
+    return octetsVersHex(hash);
+}
+
+async function hmacSha256Hex(cle, message) {
+    const cleImportee = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(cle),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+    );
+    const signature = await crypto.subtle.sign("HMAC", cleImportee, new TextEncoder().encode(message));
+    return octetsVersHex(signature);
 }
 
 function jouerSon(frequence) {
@@ -103,6 +134,18 @@ function miseMax(solde) {
 function majApercuCote() {
     const diff = DIFFICULTES[difficulteSelect.value];
     cotePreview.textContent = `Cote x${diff.coteMin} à x${diff.coteMax} selon rapidité · ${diff.essaisMax} essais · mise max : ${miseMax(soldeActuel)} pts`;
+}
+
+function afficherRTP() {
+    rtpCard.hidden = false;
+    rtpBody.innerHTML = Object.values(DIFFICULTES)
+        .map((diff) => {
+            const pGagneOptimal = Math.min(1, Math.pow(2, diff.essaisMax) / diff.max);
+            const multMoyen = (diff.coteMin + diff.coteMax) / 2;
+            const rtp = (pGagneOptimal * multMoyen * 100).toFixed(1);
+            return `<tr><td>${diff.label}</td><td>${diff.essaisMax}</td><td>x${diff.coteMin} à x${diff.coteMax}</td><td>${rtp}%</td></tr>`;
+        })
+        .join("");
 }
 
 function afficherHistorique(historique) {
@@ -150,6 +193,8 @@ async function chargerProfil() {
 
 async function chargerEtatPartie() {
     const etat = await appel("/api/game/state");
+    hashServeurEl.hidden = true;
+    equiteVerifDiv.hidden = true;
 
     if (etat.activeRound) {
         activeRound = etat.activeRound;
@@ -166,6 +211,8 @@ async function chargerEtatPartie() {
         nouvellePartieBtn.disabled = true;
         difficulteSelect.disabled = true;
         miseInput.disabled = true;
+        hashServeurEl.textContent = `🔒 Hash du tirage (vérifiable après la partie) : ${activeRound.hashServeur}`;
+        hashServeurEl.hidden = false;
     } else if (etat.pendingDouble) {
         activeRound = { roundId: etat.pendingDouble.roundId };
         doubleDiv.hidden = false;
@@ -230,6 +277,10 @@ nouvellePartieBtn.addEventListener("click", async () => {
         message.style.color = "black";
         message.textContent = `Devine un nombre entre 1 et ${DIFFICULTES[round.difficulte].max} !`;
         essaisRestantsEl.textContent = `Essais restants : ${round.essaisRestants}`;
+        hashServeurEl.textContent = `🔒 Hash du tirage (vérifiable après la partie) : ${round.hashServeur}`;
+        hashServeurEl.hidden = false;
+        equiteVerifDiv.hidden = true;
+        equiteResultat.textContent = "";
 
         guessInput.value = "";
         guessInput.disabled = false;
@@ -269,6 +320,17 @@ guessBtn.addEventListener("click", async () => {
             soldeActuel = resultat.solde;
             animerCarte("anim-gain");
             jouerSon(660);
+
+            derniereVerif = {
+                hashServeur: activeRound.hashServeur,
+                serverSeed: resultat.serverSeed,
+                nombreMystere: resultat.nombreMystere,
+                max: DIFFICULTES[activeRound.difficulte].max,
+            };
+            hashServeurEl.hidden = true;
+            equiteResultat.textContent = "";
+            equiteVerifDiv.hidden = false;
+
             await chargerProfil();
             await chargerClassement();
 
@@ -288,6 +350,17 @@ guessBtn.addEventListener("click", async () => {
             essaisRestantsEl.textContent = "";
             animerCarte("anim-perte");
             jouerSon(180);
+
+            derniereVerif = {
+                hashServeur: activeRound.hashServeur,
+                serverSeed: resultat.serverSeed,
+                nombreMystere: resultat.nombreMystere,
+                max: DIFFICULTES[activeRound.difficulte].max,
+            };
+            hashServeurEl.hidden = true;
+            equiteResultat.textContent = "";
+            equiteVerifDiv.hidden = false;
+
             await chargerProfil();
             await chargerClassement();
 
@@ -366,6 +439,26 @@ async function resoudreDouble(accepter) {
 doublerBtn.addEventListener("click", () => resoudreDouble(true));
 encaisserBtn.addEventListener("click", () => resoudreDouble(false));
 
+verifierBtn.addEventListener("click", async () => {
+    if (!derniereVerif) return;
+    equiteResultat.textContent = "Vérification en cours...";
+
+    const hashCalcule = await sha256Hex(derniereVerif.serverSeed);
+    const hashValide = hashCalcule === derniereVerif.hashServeur;
+
+    const hmac = await hmacSha256Hex(derniereVerif.serverSeed, "nombre-mystere");
+    const valeurCalculee = (parseInt(hmac.slice(0, 8), 16) % derniereVerif.max) + 1;
+    const nombreValide = valeurCalculee === derniereVerif.nombreMystere;
+
+    if (hashValide && nombreValide) {
+        equiteResultat.innerHTML =
+            `<span style="color:var(--succes)">✅ Vérifié : sha256(seed révélé) correspond au hash affiché avant la partie, ` +
+            `et le nombre recalculé (${valeurCalculee}) correspond au résultat annoncé.</span><br>Seed : ${derniereVerif.serverSeed}`;
+    } else {
+        equiteResultat.innerHTML = `<span style="color:var(--danger)">❌ Anomalie détectée lors de la vérification.</span>`;
+    }
+});
+
 resetBtn.addEventListener("click", async () => {
     await appel("/api/game/reset", { method: "POST" });
     message.style.color = "black";
@@ -377,6 +470,7 @@ resetBtn.addEventListener("click", async () => {
 difficulteSelect.addEventListener("change", majApercuCote);
 
 (async function initialiser() {
+    afficherRTP();
     try {
         await afficherJeu();
     } catch {

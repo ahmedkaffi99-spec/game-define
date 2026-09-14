@@ -5,38 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nombre Mystère - Paris fictifs</title>
     <style>
+        :root {
+            --bg: #eef1f6;
+            --carte: #ffffff;
+            --texte: #1c2530;
+            --texte-doux: #667085;
+            --texte-tres-doux: #98a2b3;
+            --bordure: #e2e5ea;
+            --accent: #4f6df5;
+            --accent-hover: #3b56d9;
+            --accent-degrade-1: #4f6df5;
+            --accent-degrade-2: #8a5cf6;
+            --succes: #16a34a;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --avertissement: #b8860b;
+            --or: #f0b429;
+            --or-hover: #d99a10;
+            --gris: #667085;
+            --gris-hover: #4b5563;
+            --ombre: 0 8px 24px rgba(20, 30, 60, 0.08);
+            --ombre-forte: 0 12px 32px rgba(20, 30, 60, 0.16);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f1420;
+                --carte: #171e2c;
+                --texte: #eef1f6;
+                --texte-doux: #a3adc2;
+                --texte-tres-doux: #6b7488;
+                --bordure: #2a3346;
+                --accent: #7c8cf8;
+                --accent-hover: #93a1fa;
+                --succes: #34d399;
+                --danger: #f87171;
+                --danger-hover: #fca5a5;
+                --avertissement: #f0b429;
+                --or: #f0b429;
+                --or-hover: #ffca4a;
+                --gris: #8a93a8;
+                --gris-hover: #a3adc2;
+                --ombre: 0 8px 24px rgba(0, 0, 0, 0.35);
+                --ombre-forte: 0 12px 32px rgba(0, 0, 0, 0.5);
+            }
+        }
+        * { box-sizing: border-box; }
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--texte);
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
             margin: 0;
-            padding: 20px 0;
-            box-sizing: border-box;
+            padding: 24px 16px;
         }
         .wrapper {
-            width: 90%;
-            max-width: 380px;
+            width: 100%;
+            max-width: 400px;
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
         .card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: var(--carte);
+            padding: 22px;
+            border-radius: 16px;
+            box-shadow: var(--ombre);
             text-align: center;
+            border: 1px solid var(--bordure);
         }
         h2 {
             margin-top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        #authCard h2 {
+            font-size: 22px;
+            background: linear-gradient(135deg, var(--accent-degrade-1), var(--accent-degrade-2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
         .disclaimer {
             font-size: 11px;
-            color: #999;
-            margin-bottom: 10px;
+            color: var(--texte-tres-doux);
+            margin-bottom: 14px;
         }
         .config {
             display: flex;
@@ -46,99 +103,145 @@
             text-align: left;
         }
         label {
-            font-size: 13px;
-            color: #555;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--texte-doux);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
         select, input {
-            padding: 8px;
+            padding: 10px 12px;
             font-size: 15px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border: 1px solid var(--bordure);
+            border-radius: 8px;
             width: 100%;
-            box-sizing: border-box;
+            background: var(--carte);
+            color: var(--texte);
+            transition: border-color 0.15s ease;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent);
         }
         #cotePreview {
             font-size: 12px;
-            color: #666;
+            color: var(--texte-doux);
             margin-bottom: 10px;
         }
+        #hashServeur {
+            font-size: 10px;
+            color: var(--texte-tres-doux);
+            font-family: "SF Mono", Consolas, Monaco, monospace;
+            word-break: break-all;
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 6px 8px;
+            margin-bottom: 8px;
+            text-align: left;
+        }
         button {
-            padding: 10px 15px;
-            font-size: 16px;
-            background-color: #007bff;
+            padding: 12px 15px;
+            font-size: 15px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-degrade-1), var(--accent-degrade-2));
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
             width: 100%;
             margin-bottom: 8px;
+            transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
         }
         button:hover:not(:disabled) {
-            background-color: #0056b3;
+            box-shadow: var(--ombre-forte);
+            transform: translateY(-1px);
+        }
+        button:active:not(:disabled) {
+            transform: translateY(0);
         }
         button:disabled {
-            background-color: #b0c4de;
+            background: var(--bordure);
+            color: var(--texte-tres-doux);
             cursor: not-allowed;
         }
-        #resetBtn, #logoutBtn {
-            background-color: #6c757d;
+        #resetBtn, #logoutBtn, #verifierBtn {
+            background: none;
+            color: var(--gris);
+            border: 1px solid var(--bordure);
         }
-        #resetBtn:hover, #logoutBtn:hover {
-            background-color: #545b62;
+        #resetBtn:hover, #logoutBtn:hover, #verifierBtn:hover:not(:disabled) {
+            color: var(--gris-hover);
+            border-color: var(--gris-hover);
+            box-shadow: none;
         }
         #indiceBtn {
-            background-color: #ffc107;
-            color: #333;
+            background: none;
+            border: 1px solid var(--or);
+            color: var(--or-hover);
         }
         #indiceBtn:hover:not(:disabled) {
-            background-color: #e0a800;
+            box-shadow: none;
+            background: var(--or);
+            color: #3a2c00;
         }
         #indiceTexte {
             font-size: 12px;
-            color: #b8860b;
+            color: var(--avertissement);
             min-height: 14px;
         }
         #doubleOuRien {
-            border: 1px dashed #ccc;
-            border-radius: 8px;
-            padding: 10px;
+            border: 1px dashed var(--bordure);
+            border-radius: 10px;
+            padding: 12px;
             margin-top: 10px;
         }
         #doublerBtn {
-            background-color: #dc3545;
+            background: var(--danger);
         }
         #doublerBtn:hover {
-            background-color: #b02a37;
+            background: var(--danger-hover);
         }
         #encaisserBtn {
-            background-color: #28a745;
+            background: var(--succes);
         }
         #encaisserBtn:hover {
-            background-color: #1e7e34;
+            background: var(--succes);
+            opacity: 0.9;
+        }
+        #equiteVerif {
+            margin-top: 6px;
+        }
+        #equiteResultat {
+            font-size: 11px;
+            font-family: "SF Mono", Consolas, Monaco, monospace;
+            word-break: break-all;
+            text-align: left;
+            color: var(--texte-doux);
+            margin-top: 6px;
         }
         #message {
             margin-top: 10px;
-            font-weight: bold;
+            font-weight: 700;
             font-size: 15px;
             min-height: 20px;
         }
         #essaisRestants {
             font-size: 13px;
-            color: #555;
+            color: var(--texte-doux);
         }
         #solde {
-            font-size: 18px;
-            font-weight: bold;
-            color: #1a7a1a;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--succes);
         }
         #stats {
             font-size: 12px;
-            color: #777;
+            color: var(--texte-doux);
             margin-bottom: 10px;
         }
         #alerte {
             font-size: 12px;
-            color: #b8860b;
+            color: var(--avertissement);
             min-height: 14px;
             margin-bottom: 5px;
         }
@@ -146,31 +249,33 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 14px;
         }
         .topbar span {
-            font-weight: bold;
+            font-weight: 700;
         }
         .topbar button {
             width: auto;
             margin-bottom: 0;
+            padding: 6px 12px;
+            font-size: 13px;
         }
         .historique {
             margin-top: 15px;
             font-size: 13px;
-            color: #666;
+            color: var(--texte-doux);
             text-align: left;
             max-height: 120px;
             overflow-y: auto;
         }
         #authError {
             font-size: 13px;
-            color: #dc3545;
+            color: var(--danger);
             min-height: 16px;
         }
         .auth-toggle {
             font-size: 13px;
-            color: #007bff;
+            color: var(--accent);
             cursor: pointer;
             text-decoration: underline;
             margin-top: 5px;
@@ -182,18 +287,25 @@
         }
         th, td {
             text-align: left;
-            padding: 4px 6px;
-            border-bottom: 1px solid #eee;
+            padding: 6px 6px;
+            border-bottom: 1px solid var(--bordure);
+        }
+        th {
+            color: var(--texte-doux);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
         @keyframes pulseGain {
-            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-            50% { transform: scale(1.03); box-shadow: 0 4px 20px rgba(40,167,69,0.5); }
-            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+            0% { transform: scale(1); box-shadow: var(--ombre); }
+            50% { transform: scale(1.03); box-shadow: 0 4px 24px rgba(22,163,74,0.5); }
+            100% { transform: scale(1); box-shadow: var(--ombre); }
         }
         @keyframes pulsePerte {
-            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-            50% { transform: scale(0.98); box-shadow: 0 4px 20px rgba(220,53,69,0.5); }
-            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+            0% { transform: scale(1); box-shadow: var(--ombre); }
+            50% { transform: scale(0.98); box-shadow: 0 4px 24px rgba(220,38,38,0.5); }
+            100% { transform: scale(1); box-shadow: var(--ombre); }
         }
         .anim-gain {
             animation: pulseGain 0.4s ease;
@@ -235,9 +347,9 @@
             <div class="config">
                 <label for="difficulte">Difficulté</label>
                 <select id="difficulte">
-                    <option value="facile">Facile (1-20)</option>
-                    <option value="moyen" selected>Moyen (1-50)</option>
-                    <option value="difficile">Difficile (1-100)</option>
+                    <option value="facile">Facile (1-40)</option>
+                    <option value="moyen" selected>Moyen (1-100)</option>
+                    <option value="difficile">Difficile (1-200)</option>
                 </select>
 
                 <label for="mise">Mise (points)</label>
@@ -247,6 +359,8 @@
 
             <button id="nouvellePartieBtn">🎰 Nouvelle partie</button>
 
+            <div id="hashServeur" hidden></div>
+
             <input type="number" id="userGuess" placeholder="Ton nombre..." disabled>
             <button id="guessBtn" disabled>Valider</button>
             <button id="indiceBtn" disabled hidden>💡 Indice</button>
@@ -254,6 +368,11 @@
 
             <div id="essaisRestants"></div>
             <div id="message"></div>
+
+            <div id="equiteVerif" hidden>
+                <button id="verifierBtn">🔍 Vérifier l'équité de ce tirage</button>
+                <div id="equiteResultat"></div>
+            </div>
 
             <div id="doubleOuRien" hidden>
                 <p style="font-size:13px;margin:0 0 8px">Tenter de doubler ce gain ?</p>
@@ -274,6 +393,17 @@
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
             </table>
+        </div>
+
+        <div class="card" id="rtpCard" hidden>
+            <h2 style="font-size:16px">📊 Transparence des cotes</h2>
+            <table>
+                <thead>
+                    <tr><th>Difficulté</th><th>Essais</th><th>Cotes</th><th>RTP théorique*</th></tr>
+                </thead>
+                <tbody id="rtpBody"></tbody>
+            </table>
+            <p style="font-size:11px;color:#888;margin:8px 0 0">*Taux de redistribution théorique estimé pour une stratégie de recherche optimale (dichotomie). Le hasard réel du tirage fait varier le résultat individuel.</p>
         </div>
 
     </div>
