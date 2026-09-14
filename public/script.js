@@ -1,3 +1,18 @@
+window.addEventListener("error", (e) => {
+    const div = document.createElement("div");
+    div.style.cssText =
+        "position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;padding:10px;font-family:monospace;font-size:12px;z-index:99999;white-space:pre-wrap;";
+    div.textContent = `Erreur JS : ${e.message} (${e.filename}:${e.lineno})`;
+    document.body.prepend(div);
+});
+window.addEventListener("unhandledrejection", (e) => {
+    const div = document.createElement("div");
+    div.style.cssText =
+        "position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;padding:10px;font-family:monospace;font-size:12px;z-index:99999;white-space:pre-wrap;";
+    div.textContent = `Erreur async : ${e.reason && e.reason.message ? e.reason.message : e.reason}`;
+    document.body.prepend(div);
+});
+
 const DIFFICULTES = {
     facile: { label: "Facile (1-20)", max: 20, essaisMax: 6, coteMax: 3, coteMin: 1.5 },
     moyen: { label: "Moyen (1-50)", max: 50, essaisMax: 7, coteMax: 5, coteMin: 2 },
