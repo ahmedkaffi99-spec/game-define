@@ -66,7 +66,7 @@ const confettiCanvas = document.getElementById("confettiCanvas");
 let modeInscription = false;
 
 // --- Confettis (canvas 2D) à la victoire ---
-const COULEURS_CONFETTI = ["#4f6df5", "#8a5cf6", "#f0b429", "#16a34a", "#dc2626", "#ffffff"];
+const COULEURS_CONFETTI = ["#f3dfa0", "#c9a961", "#b8860b", "#8b6f2f", "#f3ecdd", "#34caa0"];
 let confettiAnimationId = null;
 
 function lancerConfettis() {
@@ -146,12 +146,20 @@ function creerTexturesChiffres() {
         canvas.width = 120;
         canvas.height = 150;
         const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#20283a";
+        const degrade = ctx.createRadialGradient(60, 75, 10, 60, 75, 110);
+        degrade.addColorStop(0, "#1c1826");
+        degrade.addColorStop(1, "#0a0910");
+        ctx.fillStyle = degrade;
         ctx.fillRect(0, 0, 120, 150);
-        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#c9a961";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(2, 2, 116, 146);
+        ctx.fillStyle = "#f3dfa0";
         ctx.font = "bold 92px 'SF Mono', Consolas, monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
+        ctx.shadowColor = "rgba(201, 169, 97, 0.6)";
+        ctx.shadowBlur = 12;
         ctx.fillText(String(d), 60, 80);
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
@@ -370,7 +378,7 @@ async function chargerEtatPartie() {
         const diff = DIFFICULTES[activeRound.difficulte];
         difficulteSelect.value = activeRound.difficulte;
         miseInput.value = activeRound.mise;
-        message.style.color = "black";
+        message.style.color = "#f3ecdd";
         message.textContent = `Devine un nombre entre 1 et ${diff.max} !`;
         essaisRestantsEl.textContent = `Essais restants : ${activeRound.essaisRestants}`;
         guessInput.disabled = false;
@@ -443,7 +451,7 @@ nouvellePartieBtn.addEventListener("click", async () => {
         activeRound = round;
 
         soldeEl.textContent = `💰 Solde : ${round.solde} points`;
-        message.style.color = "black";
+        message.style.color = "#f3ecdd";
         message.textContent = `Devine un nombre entre 1 et ${DIFFICULTES[round.difficulte].max} !`;
         essaisRestantsEl.textContent = `Essais restants : ${round.essaisRestants}`;
         hashServeurEl.textContent = `🔒 Hash du tirage (vérifiable après la partie) : ${round.hashServeur}`;
@@ -463,7 +471,7 @@ nouvellePartieBtn.addEventListener("click", async () => {
         miseInput.disabled = true;
         guessInput.focus();
     } catch (err) {
-        message.style.color = "orange";
+        message.style.color = "#d9a441";
         message.textContent = `⚠️ ${err.message}`;
     }
 });
@@ -472,7 +480,7 @@ guessBtn.addEventListener("click", async () => {
     if (!activeRound) return;
     const valeur = Number(guessInput.value);
     if (!valeur) {
-        message.style.color = "orange";
+        message.style.color = "#d9a441";
         message.textContent = "⚠️ Entre un nombre valide !";
         return;
     }
@@ -489,7 +497,7 @@ guessBtn.addEventListener("click", async () => {
             message.textContent = "";
             await animerReels(resultat.nombreMystere, 3);
 
-            message.style.color = "green";
+            message.style.color = "#34caa0";
             message.textContent = `🎉 Bravo ! Le nombre était ${resultat.nombreMystere}. Tu gagnes ${resultat.gain} points !`;
             essaisRestantsEl.textContent = "";
             soldeActuel = resultat.solde;
@@ -526,7 +534,7 @@ guessBtn.addEventListener("click", async () => {
             message.textContent = "";
             await animerReels(resultat.nombreMystere, 3);
 
-            message.style.color = "red";
+            message.style.color = "#e2637a";
             message.textContent = `💥 Perdu ! Le nombre était ${resultat.nombreMystere}.`;
             essaisRestantsEl.textContent = "";
             animerCarte("anim-perte");
@@ -557,13 +565,13 @@ guessBtn.addEventListener("click", async () => {
             return;
         }
 
-        message.style.color = resultat.resultat === "plus_grand" ? "blue" : "red";
+        message.style.color = resultat.resultat === "plus_grand" ? "#f3dfa0" : "#e2637a";
         message.textContent = resultat.resultat === "plus_grand" ? "📉 C'est plus grand !" : "📈 C'est plus petit !";
         essaisRestantsEl.textContent = `Essais restants : ${resultat.essaisRestants}`;
         guessInput.value = "";
         guessInput.focus();
     } catch (err) {
-        message.style.color = "orange";
+        message.style.color = "#d9a441";
         message.textContent = `⚠️ ${err.message}`;
     }
 });
@@ -593,12 +601,12 @@ async function resoudreDouble(accepter) {
         });
 
         if (resultat.resultat === "double_gagne") {
-            message.style.color = "green";
+            message.style.color = "#34caa0";
             message.textContent = `🎲 Doublé ! +${resultat.montant} points supplémentaires !`;
             jouerSon(880);
             lancerConfettis();
         } else if (resultat.resultat === "double_perdu") {
-            message.style.color = "red";
+            message.style.color = "#e2637a";
             message.textContent = `🎲 Perdu ! -${resultat.montant} points.`;
             jouerSon(140);
         } else {
@@ -613,7 +621,7 @@ async function resoudreDouble(accepter) {
         await chargerProfil();
         await chargerClassement();
     } catch (err) {
-        message.style.color = "orange";
+        message.style.color = "#d9a441";
         message.textContent = `⚠️ ${err.message}`;
     }
 }
@@ -643,7 +651,7 @@ verifierBtn.addEventListener("click", async () => {
 
 resetBtn.addEventListener("click", async () => {
     await appel("/api/game/reset", { method: "POST" });
-    message.style.color = "black";
+    message.style.color = "#f3ecdd";
     message.textContent = "Solde réinitialisé.";
     await chargerProfil();
     await chargerClassement();
