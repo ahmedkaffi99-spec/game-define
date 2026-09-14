@@ -297,6 +297,14 @@
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }
+        #reelCanvas {
+            width: 100%;
+            max-width: 260px;
+            height: 90px;
+            margin: 8px auto;
+            display: block;
+            border-radius: 10px;
+        }
         @keyframes pulseGain {
             0% { transform: scale(1); box-shadow: var(--ombre); }
             50% { transform: scale(1.03); box-shadow: 0 4px 24px rgba(22,163,74,0.5); }
@@ -367,6 +375,7 @@
             <div id="indiceTexte"></div>
 
             <div id="essaisRestants"></div>
+            <canvas id="reelCanvas" hidden></canvas>
             <div id="message"></div>
 
             <div id="equiteVerif" hidden>
@@ -408,6 +417,7 @@
 
     </div>
 
+    <script src="vendor/three.min.js"></script>
     <script src="script.js"></script>
 
 </body>
