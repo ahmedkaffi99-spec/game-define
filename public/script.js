@@ -60,8 +60,107 @@ const verifierBtn = document.getElementById("verifierBtn");
 const equiteResultat = document.getElementById("equiteResultat");
 const rtpCard = document.getElementById("rtpCard");
 const rtpBody = document.getElementById("rtpBody");
+const reelCanvas = document.getElementById("reelCanvas");
 
 let modeInscription = false;
+
+// --- Rouleaux 3D (Three.js / WebGL) pour la révélation du nombre mystère ---
+const NB_ROULEAUX = 3;
+let reelScene, reelCamera, reelRenderer, rouleaux = [];
+let texturesChiffres = [];
+
+function creerTexturesChiffres() {
+    const textures = [];
+    for (let d = 0; d < 10; d++) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 120;
+        canvas.height = 150;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#20283a";
+        ctx.fillRect(0, 0, 120, 150);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 92px 'SF Mono', Consolas, monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(d), 60, 80);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        textures.push(texture);
+    }
+    return textures;
+}
+
+function initReels() {
+    if (typeof THREE === "undefined" || !reelCanvas) return;
+    reelRenderer = new THREE.WebGLRenderer({ canvas: reelCanvas, alpha: true, antialias: true });
+    reelRenderer.setPixelRatio(window.devicePixelRatio || 1);
+    reelRenderer.setSize(260, 90, false);
+
+    reelScene = new THREE.Scene();
+    reelCamera = new THREE.PerspectiveCamera(28, 260 / 90, 0.1, 100);
+    reelCamera.position.set(0, 0, 6);
+
+    reelScene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const lumiere = new THREE.DirectionalLight(0xffffff, 0.6);
+    lumiere.position.set(2, 3, 5);
+    reelScene.add(lumiere);
+
+    texturesChiffres = creerTexturesChiffres();
+    for (let i = 0; i < NB_ROULEAUX; i++) {
+        const geometrie = new THREE.BoxGeometry(1, 1.3, 0.3);
+        const materiau = new THREE.MeshStandardMaterial({ map: texturesChiffres[0], roughness: 0.4, metalness: 0.1 });
+        const rouleau = new THREE.Mesh(geometrie, materiau);
+        rouleau.position.x = (i - (NB_ROULEAUX - 1) / 2) * 1.15;
+        reelScene.add(rouleau);
+        rouleaux.push(rouleau);
+    }
+    reelRenderer.render(reelScene, reelCamera);
+}
+
+// Chaque rouleau défile rapidement à travers des chiffres aléatoires (effet
+// machine à sous) puis ralentit et se fige exactement sur le bon chiffre :
+// la valeur finale est toujours assignée explicitement, jamais déduite d'une
+// rotation calculée, donc pas de risque de désalignement visuel.
+function animerReels(nombre, maxChiffres) {
+    return new Promise((resolve) => {
+        if (!reelRenderer) return resolve();
+        const chiffresCibles = String(nombre).padStart(maxChiffres, "0").split("").map(Number);
+        reelCanvas.hidden = false;
+
+        const dureeTotale = 1300;
+        const decalages = [0, 220, 440];
+        const debut = performance.now();
+
+        function tick(t) {
+            let tousArretes = true;
+            rouleaux.forEach((rouleau, i) => {
+                const dureeRouleau = dureeTotale;
+                const ecoule = t - debut - decalages[i];
+                const progres = Math.min(1, Math.max(0, ecoule / dureeRouleau));
+                if (progres < 1) tousArretes = false;
+
+                if (progres >= 1) {
+                    rouleau.material.map = texturesChiffres[chiffresCibles[i]];
+                    rouleau.material.needsUpdate = true;
+                    rouleau.rotation.x = 0;
+                } else if (ecoule >= 0) {
+                    const vitesse = 45 + (1 - progres) * 180;
+                    const indexTick = Math.floor(ecoule / vitesse);
+                    rouleau.material.map = texturesChiffres[indexTick % 10];
+                    rouleau.material.needsUpdate = true;
+                    rouleau.rotation.x = Math.sin(ecoule / 55) * 0.18 * (1 - progres);
+                }
+            });
+            reelRenderer.render(reelScene, reelCamera);
+            if (!tousArretes) {
+                requestAnimationFrame(tick);
+            } else {
+                resolve();
+            }
+        }
+        requestAnimationFrame(tick);
+    });
+}
 
 async function appel(url, options = {}) {
     const res = await fetch(url, {
@@ -281,6 +380,7 @@ nouvellePartieBtn.addEventListener("click", async () => {
         hashServeurEl.hidden = false;
         equiteVerifDiv.hidden = true;
         equiteResultat.textContent = "";
+        reelCanvas.hidden = true;
 
         guessInput.value = "";
         guessInput.disabled = false;
@@ -314,6 +414,11 @@ guessBtn.addEventListener("click", async () => {
         });
 
         if (resultat.resultat === "gagne") {
+            guessInput.disabled = true;
+            guessBtn.disabled = true;
+            message.textContent = "";
+            await animerReels(resultat.nombreMystere, 3);
+
             message.style.color = "green";
             message.textContent = `🎉 Bravo ! Le nombre était ${resultat.nombreMystere}. Tu gagnes ${resultat.gain} points !`;
             essaisRestantsEl.textContent = "";
@@ -345,6 +450,11 @@ guessBtn.addEventListener("click", async () => {
         }
 
         if (resultat.resultat === "perdu") {
+            guessInput.disabled = true;
+            guessBtn.disabled = true;
+            message.textContent = "";
+            await animerReels(resultat.nombreMystere, 3);
+
             message.style.color = "red";
             message.textContent = `💥 Perdu ! Le nombre était ${resultat.nombreMystere}.`;
             essaisRestantsEl.textContent = "";
@@ -471,6 +581,7 @@ difficulteSelect.addEventListener("change", majApercuCote);
 
 (async function initialiser() {
     afficherRTP();
+    initReels();
     try {
         await afficherJeu();
     } catch {
