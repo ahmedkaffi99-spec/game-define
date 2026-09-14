@@ -4,7 +4,9 @@ const requireAuth = require("../middleware/auth");
 const {
     DIFFICULTES,
     SEUIL_ALERTE_PERTES,
-    tirerNombre,
+    genererServerSeed,
+    hacherSeed,
+    tirerNombreDepuisSeed,
     miseMax,
     coutIndice,
     calculerGain,
@@ -23,6 +25,7 @@ function vueRound(round) {
         essaisMax: round.essais_max,
         essaisRestants: diff.essaisMax - round.essais_utilises,
         indiceUtilise: round.indice_utilise,
+        hashServeur: hacherSeed(round.server_seed),
     };
 }
 
@@ -93,14 +96,15 @@ router.post("/start", async (req, res) => {
             return res.status(400).json({ erreur: `Mise limitée à ${max} points (50% du solde).` });
         }
 
-        const nombreMystere = tirerNombre(diff.max);
+        const serverSeed = genererServerSeed();
+        const nombreMystere = tirerNombreDepuisSeed(serverSeed, diff.max);
         const nouveauSolde = utilisateur.solde - mise;
 
         await client.query("UPDATE users SET solde = $1 WHERE id = $2", [nouveauSolde, req.userId]);
         const round = await client.query(
-            `INSERT INTO rounds (user_id, difficulte, nombre_mystere, mise, essais_max)
-             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [req.userId, difficulte, nombreMystere, mise, diff.essaisMax]
+            `INSERT INTO rounds (user_id, difficulte, nombre_mystere, mise, essais_max, server_seed)
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [req.userId, difficulte, nombreMystere, mise, diff.essaisMax, serverSeed]
         );
 
         await client.query("COMMIT");
@@ -162,6 +166,7 @@ router.post("/guess", async (req, res) => {
             return res.json({
                 resultat: "gagne",
                 nombreMystere: round.nombre_mystere,
+                serverSeed: round.server_seed,
                 gain,
                 solde: nouveauSolde,
                 pertesConsecutives: 0,
@@ -191,6 +196,7 @@ router.post("/guess", async (req, res) => {
             return res.json({
                 resultat: "perdu",
                 nombreMystere: round.nombre_mystere,
+                serverSeed: round.server_seed,
                 solde: utilisateur.solde,
                 pertesConsecutives,
                 alerte: pertesConsecutives >= SEUIL_ALERTE_PERTES,
