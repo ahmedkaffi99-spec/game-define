@@ -61,8 +61,78 @@ const equiteResultat = document.getElementById("equiteResultat");
 const rtpCard = document.getElementById("rtpCard");
 const rtpBody = document.getElementById("rtpBody");
 const reelCanvas = document.getElementById("reelCanvas");
+const confettiCanvas = document.getElementById("confettiCanvas");
 
 let modeInscription = false;
+
+// --- Confettis (canvas 2D) à la victoire ---
+const COULEURS_CONFETTI = ["#4f6df5", "#8a5cf6", "#f0b429", "#16a34a", "#dc2626", "#ffffff"];
+let confettiAnimationId = null;
+
+function lancerConfettis() {
+    const ctx = confettiCanvas.getContext("2d");
+    const ratio = window.devicePixelRatio || 1;
+    const largeur = window.innerWidth;
+    const hauteur = window.innerHeight;
+    confettiCanvas.width = largeur * ratio;
+    confettiCanvas.height = hauteur * ratio;
+    confettiCanvas.style.width = largeur + "px";
+    confettiCanvas.style.height = hauteur + "px";
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+    const nbParticules = 140;
+    const particules = Array.from({ length: nbParticules }, () => ({
+        x: largeur / 2 + (Math.random() - 0.5) * 60,
+        y: hauteur * 0.35 + (Math.random() - 0.5) * 40,
+        vx: (Math.random() - 0.5) * 9,
+        vy: -Math.random() * 9 - 3,
+        taille: Math.random() * 7 + 4,
+        couleur: COULEURS_CONFETTI[Math.floor(Math.random() * COULEURS_CONFETTI.length)],
+        rotation: Math.random() * Math.PI * 2,
+        vRotation: (Math.random() - 0.5) * 0.3,
+        forme: Math.random() < 0.5 ? "rect" : "cercle",
+    }));
+
+    if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+    const debut = performance.now();
+    const duree = 2200;
+    const gravite = 0.18;
+
+    function frame(t) {
+        const ecoule = t - debut;
+        ctx.clearRect(0, 0, largeur, hauteur);
+        const opacite = ecoule > duree - 500 ? Math.max(0, (duree - ecoule) / 500) : 1;
+
+        particules.forEach((p) => {
+            p.vy += gravite;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rotation += p.vRotation;
+
+            ctx.save();
+            ctx.globalAlpha = opacite;
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rotation);
+            ctx.fillStyle = p.couleur;
+            if (p.forme === "rect") {
+                ctx.fillRect(-p.taille / 2, -p.taille / 3, p.taille, p.taille * 0.66);
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, p.taille / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        });
+
+        if (ecoule < duree) {
+            confettiAnimationId = requestAnimationFrame(frame);
+        } else {
+            ctx.clearRect(0, 0, largeur, hauteur);
+            confettiAnimationId = null;
+        }
+    }
+    confettiAnimationId = requestAnimationFrame(frame);
+}
 
 // --- Rouleaux 3D (Three.js / WebGL) pour la révélation du nombre mystère ---
 const NB_ROULEAUX = 3;
@@ -425,6 +495,7 @@ guessBtn.addEventListener("click", async () => {
             soldeActuel = resultat.solde;
             animerCarte("anim-gain");
             jouerSon(660);
+            lancerConfettis();
 
             derniereVerif = {
                 hashServeur: activeRound.hashServeur,
@@ -525,6 +596,7 @@ async function resoudreDouble(accepter) {
             message.style.color = "green";
             message.textContent = `🎲 Doublé ! +${resultat.montant} points supplémentaires !`;
             jouerSon(880);
+            lancerConfettis();
         } else if (resultat.resultat === "double_perdu") {
             message.style.color = "red";
             message.textContent = `🎲 Perdu ! -${resultat.montant} points.`;
